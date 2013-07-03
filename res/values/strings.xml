@@ -2,39 +2,22 @@
 <resources>
 	<string name="app_name"    >AndCA</string>
 	<string name="start_rec"   >Start Recording</string>
+	<string name="select_rec"  >Select Recording</string>
 	<string name="view_rec"    >View Recording</string>
 	<string name="upload_rec"  >Upload Recording</string>
 
-	<string name="play_pause"  >Play/Pause</string>
-	<string name="fullscreen"  >Fullscreen</string>
-	<string name="mute"        >Mute</string>
-	<string name="time"        >Time</string>
-	<string name="playtime"    >Playtime</string>
-	<string name="prev"        >Prev</string>
-	<string name="next"        >Next</string>
-	<string name="plus10s"     >+10s</string>
-	<string name="minus10s"    >-10s</string>
-	<string name="plus1m"      >+1m</string>
-	<string name="minus1m"     >-1m</string>
-	<string name="plus10m"     >+10m</string>
-	<string name="minus10m"    >-10m</string>
-	<string name="streams"     >Streams</string>
-	<string name="audio"       >Audio</string>
-	<string name="subtitle"    >Subtitle</string>
-	<string name="volup"       >Volume up</string>
-	<string name="voldown"     >Volume down</string>
-	<string name="close"       >Close</string>
+	<string name="step_one"    >Step 1:</string>
+	<string name="selected_file">Selected file:</string>
+	<string name="step_two"    >Step 2:</string>
+	<string name="step_three"  >Step 3:</string>
+
 	<string name="settings"    >Settings</string>
 	<string name="server_host" >Server host</string>
 	<string name="server_port" >Server port</string>
 	<string name="user"        >User</string>
 	<string name="password"    >Password</string>
 	<string name="save"        >Save</string>
-	<string name="closeConfirm">Close MPlayer?</string>
 	<string name="ok"          >OK</string>
 	<string name="cancel"      >Cancel</string>
 	<string name="error"       >Error</string>
-	<string name="timeouterror">Connection timed out.</string>
-	<string name="cmderror"    >Bad request.</string>
-	<string name="mplayererror">Could not connect to MPlayer.</string>
 </resources>

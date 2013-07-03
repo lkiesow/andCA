@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import android.net.Uri;
 import android.database.Cursor;
 import android.util.Log;
+import android.content.CursorLoader;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.util.EntityUtils;
@@ -68,12 +69,17 @@ public class AndCA extends Activity
 {
 	private AndCAApplication app;
 
+	private static final int ACTION_TAKE_VIDEO  = 3;
+	private static final int ACTION_SELECT_FILE = 2;
+
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
+
+		activateButtons();
 
 		/* Restore preferences */
 		app = ((AndCAApplication) this.getApplication());
@@ -86,6 +92,20 @@ public class AndCA extends Activity
 
 	}
 
+
+	private void activateButtons() {
+
+		app = ((AndCAApplication) this.getApplication());
+		/* Enable/Disable buttons */
+		Button btn;
+		btn = (Button) findViewById(R.id.viewbutton);
+		btn.setEnabled( app.lastRecordingPath != null );
+		btn = (Button) findViewById(R.id.uploadbutton);
+		btn.setEnabled( app.lastRecordingPath != null );
+
+	}
+
+
 	@Override
 	protected void onStop() {
 		super.onStop();
@@ -93,6 +113,11 @@ public class AndCA extends Activity
 
 	public void startRecording(View view) {
 		dispatchTakeVideoIntent();
+	}
+
+	public void selectRecording(View view) {
+		Intent intent = new Intent("org.openintents.action.PICK_FILE");
+		startActivityForResult(intent, ACTION_SELECT_FILE);
 	}
 
 	public void viewRecording(View view) {
@@ -104,8 +129,6 @@ public class AndCA extends Activity
 	public void uploadRecording(View view) {
 		ingest();
 	}
-
-	private static final int ACTION_TAKE_VIDEO = 3;
 
 	private void dispatchTakeVideoIntent() {
 		Intent takeVideoIntent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
@@ -131,22 +154,32 @@ public class AndCA extends Activity
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
 
 		if (resultCode == RESULT_OK) {
-			if (requestCode == ACTION_TAKE_VIDEO) {
+			if (requestCode == ACTION_TAKE_VIDEO || requestCode == ACTION_SELECT_FILE) {
 				app.lastRecordingUri = data.getData();
 				app.lastRecordingPath = getPath(app.lastRecordingUri);
+				Log.d("LOGCAT", "##########################################");
+				Log.d("LOGCAT", "Video path is: " + app.lastRecordingUri);
 				Log.d("LOGCAT", "Video path is: " + app.lastRecordingPath);
+				Log.d("LOGCAT", "##########################################");
+				activateButtons();
 			}
 		}
 	}
 
 	public String getPath(Uri uri) {
-		String[] projection = { MediaStore.Images.Media.DATA };
-		Cursor cursor = managedQuery(uri, projection, null, null, null);
-		if (cursor == null) return null;
-		int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-		cursor.moveToFirst();
-		String s=cursor.getString(column_index);
-		return s;
+		if ( "content".equals(uri.getScheme()) ) {      
+			String[] projection = { MediaStore.Images.Media.DATA };
+			Cursor cursor = managedQuery(uri, projection, null, null, null);
+			if (cursor != null) {
+				int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+				cursor.moveToFirst();
+				return cursor.getString(column_index);
+			}
+
+		} else if ( "file".equals(uri.getScheme()) ) {
+			return uri.getPath();
+		}
+		return null;
 	}
 
 	public void showErrorDialog( int resid ) {

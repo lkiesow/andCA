@@ -3,6 +3,12 @@
 	android:layout_height="fill_parent" 
 	xmlns:android="http://schemas.android.com/apk/res/android">
 	<TableRow>
+		<TextView
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="@string/step_one" />
+	</TableRow>
+	<TableRow>
 		<Button 
 			android:id="@+id/startbutton"
 			android:text="@string/start_rec"
@@ -11,16 +17,52 @@
 			android:layout_height="wrap_content"
 			android:padding="20sp"
 			android:onClick="startRecording" />
+		<Button 
+			android:id="@+id/selectbutton"
+			android:text="@string/select_rec"
+			android:layout_weight="1"
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"
+			android:padding="20sp"
+			android:onClick="selectRecording" />
+	</TableRow>
+	<TableRow>
+		<TextView
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="@string/selected_file" />
+		<TextView
+			android:id="@+id/selected_file"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="" />
+	</TableRow>
+	<TableRow>
+		<TextView
+			android:layout_height="wrap_content"
+			android:text=" " />
+	</TableRow>
+	<TableRow>
+		<TextView
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="@string/step_two" />
 	</TableRow>
 	<TableRow>
 		<Button 
-			android:id="@+id/startbutton"
+			android:id="@+id/viewbutton"
 			android:text="@string/view_rec"
 			android:layout_weight="1"
 			android:layout_width="0dp"
 			android:layout_height="wrap_content"
 			android:padding="20sp"
 			android:onClick="viewRecording" />
+	</TableRow>
+	<TableRow>
+		<TextView
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="@string/step_three" />
 	</TableRow>
 	<TableRow>
 		<Button 

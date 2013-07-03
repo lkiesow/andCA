@@ -21,6 +21,7 @@ public class Settings extends Activity {
 
 		app = ((AndCAApplication) this.getApplication());
 
+		((EditText) findViewById(R.id.hostedit)).setEnabled(true);
 		((EditText) findViewById(R.id.hostedit)).setText( app.host );
 		((EditText) findViewById(R.id.portedit)).setText( app.port );
 		((EditText) findViewById(R.id.useredit)).setText( app.user );
