@@ -81,7 +81,7 @@ public class AndCA extends Activity
        
 		app.host   = settings.getString("host",     "131.173.168.36");
 		app.port   = settings.getString("port",     "8080");
-		app.user   = settings.getString("user",     "digestadmin");
+		app.user   = settings.getString("user",     "admin");
 		app.passwd = settings.getString("password", "opencast");
 
 	}
@@ -205,24 +205,33 @@ public class AndCA extends Activity
 			List <NameValuePair> nvps = new ArrayList <NameValuePair>();
 			nvps.add(new BasicNameValuePair("j_username", "admin"));
 			nvps.add(new BasicNameValuePair("j_password", "o pencast"));
-			*/
-			MultipartEntity multipartEntity =  new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);  
-			multipartEntity.addPart("j_username",  new StringBody(app.username));
-			multipartEntity.addPart("j_password",  new StringBody(app.password));
-			httppost.setEntity(multipartEntity);
 
 			httppost.setEntity(new UrlEncodedFormEntity(nvps, Consts.UTF_8));
+			*/
+			List <NameValuePair> nvps = new ArrayList <NameValuePair>();
+			nvps.add(new BasicNameValuePair("j_username", app.user));
+			nvps.add(new BasicNameValuePair("j_password", app.passwd));
+
+			httppost.setEntity(new UrlEncodedFormEntity(nvps));
+			/*
+			MultipartEntity multipartEntity =  new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);  
+			multipartEntity.addPart("j_username",  new StringBody(app.user));
+			multipartEntity.addPart("j_password",  new StringBody(app.passwd));
+			httppost.setEntity(multipartEntity);
+			*/
 
 			HttpResponse response = httpClient.execute(httppost);
 			HttpEntity entity = response.getEntity();
 
-			if (!response.getStatusLine().contains("302 Found")) {
-				Log.e("MH Login failed");
+			/*
+			if (!response.getStatusLine().toString().contains("302 Found")) {
+				Log.e("MH Login", "Login failed: Response was: " + response.getStatusLine());
 				return;
 			}
+			*/
+			/*
 			EntityUtils.consume(entity);
 
-			/*
 			System.out.println("Post logon cookies:");
 			List<Cookie> cookies = httpclient.getCookieStore().getCookies();
 			if (cookies.isEmpty()) {
@@ -234,12 +243,14 @@ public class AndCA extends Activity
 				}
 			}
 			*/
-			String location = response.getFirstHeader("location");
+			/*
+			String location = response.getFirstHeader("location").getValue();
 			if ( location == null || location.contains("login.html") ) {
-				/* Login was incorrect: Abort! */
-				Log.e("MH Login failed");
+				// Login was incorrect: Abort!
+				Log.e("MH Login", "Login failed: Incorrect username");
 				return;
 			}
+			*/
 
 			httppost = new HttpPost("http://" + app.host + ":" + app.port + "/ingest/addMediaPackage");
 
