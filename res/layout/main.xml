@@ -1,0 +1,36 @@
+<TableLayout 
+	android:layout_width="fill_parent" 
+	android:layout_height="fill_parent" 
+	xmlns:android="http://schemas.android.com/apk/res/android">
+	<TableRow>
+		<Button 
+			android:id="@+id/startbutton"
+			android:text="@string/start_rec"
+			android:layout_weight="1"
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"
+			android:padding="20sp"
+			android:onClick="startRecording" />
+	</TableRow>
+	<TableRow>
+		<Button 
+			android:id="@+id/startbutton"
+			android:text="@string/start_rec"
+			android:layout_weight="1"
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"
+			android:padding="20sp"
+			android:onClick="viewRecording" />
+	</TableRow>
+	<TableRow>
+		<Button 
+			android:id="@+id/uploadbutton"
+			android:text="@string/upload_rec"
+			android:layout_weight="1"
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"
+			android:padding="20sp"
+			android:onClick="uploadRecording" />
+	</TableRow>
+</TableLayout>
+
