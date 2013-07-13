@@ -19,9 +19,9 @@ public class Settings extends Activity {
 		// Set the text view as the activity layout
 		setContentView(R.layout.options);
 
-		app = ((AndCAApplication) this.getApplication());
+		app = (AndCAApplication) this.getApplication();
 
-		((EditText) findViewById(R.id.hostedit)).setEnabled(true);
+		//((EditText) findViewById(R.id.hostedit)).setEnabled(true);
 		((EditText) findViewById(R.id.hostedit)).setText( app.host );
 		((EditText) findViewById(R.id.portedit)).setText( app.port );
 		((EditText) findViewById(R.id.useredit)).setText( app.user );

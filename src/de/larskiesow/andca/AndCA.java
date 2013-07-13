@@ -21,6 +21,11 @@ import android.content.Intent;
 import android.content.DialogInterface;
 import android.app.AlertDialog;
 import android.content.SharedPreferences;
+import android.widget.EditText;
+import android.text.TextWatcher;
+import android.text.Editable;
+import android.view.WindowManager;
+import android.widget.TextView;
 
 import android.content.Context;
 import android.provider.MediaStore;
@@ -90,18 +95,36 @@ public class AndCA extends Activity
 		app.user   = settings.getString("user",     "admin");
 		app.passwd = settings.getString("password", "opencast");
 
+		/* Set listener for edit fields */
+		TextWatcher t = new TextWatcher(){
+			public void afterTextChanged(Editable s) {activateButtons();}
+			public void beforeTextChanged(CharSequence s, int start, int count, int after){}
+			public void onTextChanged(CharSequence s, int start, int before, int count){}
+		};
+		((EditText) findViewById(R.id.set_title)).addTextChangedListener(t);
+		((EditText) findViewById(R.id.set_creator)).addTextChangedListener(t);
+
+		/* Take focus from disaled input */
+		this.getWindow().setSoftInputMode(
+				WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+
 	}
 
 
 	private void activateButtons() {
 
 		app = ((AndCAApplication) this.getApplication());
+		Boolean step2 = app.lastRecordingPath != null;
+
+		String title   = ((EditText) findViewById(R.id.set_title)).getText().toString();
+		String creator = ((EditText) findViewById(R.id.set_creator)).getText().toString();
+		Boolean step3 = step2 && !"".equals(title) && !"".equals(creator);
 		/* Enable/Disable buttons */
-		Button btn;
-		btn = (Button) findViewById(R.id.viewbutton);
-		btn.setEnabled( app.lastRecordingPath != null );
-		btn = (Button) findViewById(R.id.uploadbutton);
-		btn.setEnabled( app.lastRecordingPath != null );
+		findViewById(R.id.viewbutton).setEnabled(step2);
+		findViewById(R.id.set_title).setEnabled(step2);
+		findViewById(R.id.set_creator).setEnabled(step2);
+		findViewById(R.id.uploadbutton).setEnabled(step3);
+
 
 	}
 
@@ -144,12 +167,6 @@ public class AndCA extends Activity
 		return list.size() > 0;
 	}
 
-	/*
-	private void handleCameraVideo(Intent intent) {
-		mVideoUri = intent.getData();
-		mVideoView.setVideoURI(mVideoUri);
-	}
-	*/
 	
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
 
@@ -157,14 +174,14 @@ public class AndCA extends Activity
 			if (requestCode == ACTION_TAKE_VIDEO || requestCode == ACTION_SELECT_FILE) {
 				app.lastRecordingUri = data.getData();
 				app.lastRecordingPath = getPath(app.lastRecordingUri);
-				Log.d("LOGCAT", "##########################################");
-				Log.d("LOGCAT", "Video path is: " + app.lastRecordingUri);
-				Log.d("LOGCAT", "Video path is: " + app.lastRecordingPath);
-				Log.d("LOGCAT", "##########################################");
+
+				String fileName = new File(app.lastRecordingPath).getName();
+				((TextView) findViewById(R.id.selected_file)).setText(fileName);
 				activateButtons();
 			}
 		}
 	}
+
 
 	public String getPath(Uri uri) {
 		if ( "content".equals(uri.getScheme()) ) {      
@@ -230,67 +247,29 @@ public class AndCA extends Activity
 
 		DefaultHttpClient httpClient = new DefaultHttpClient();
 
+		String title   = ((EditText) findViewById(R.id.set_title)).getText().toString();
+		String creator = ((EditText) findViewById(R.id.set_creator)).getText().toString();
+
 		try {
 			/* First login to the MH core server */
 			HttpPost httppost = new HttpPost("http://" + app.host + ":" + app.port + "/j_spring_security_check");
 
-			/*
-			List <NameValuePair> nvps = new ArrayList <NameValuePair>();
-			nvps.add(new BasicNameValuePair("j_username", "admin"));
-			nvps.add(new BasicNameValuePair("j_password", "o pencast"));
-
-			httppost.setEntity(new UrlEncodedFormEntity(nvps, Consts.UTF_8));
-			*/
 			List <NameValuePair> nvps = new ArrayList <NameValuePair>();
 			nvps.add(new BasicNameValuePair("j_username", app.user));
 			nvps.add(new BasicNameValuePair("j_password", app.passwd));
 
 			httppost.setEntity(new UrlEncodedFormEntity(nvps));
-			/*
-			MultipartEntity multipartEntity =  new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);  
-			multipartEntity.addPart("j_username",  new StringBody(app.user));
-			multipartEntity.addPart("j_password",  new StringBody(app.passwd));
-			httppost.setEntity(multipartEntity);
-			*/
 
 			HttpResponse response = httpClient.execute(httppost);
 			HttpEntity entity = response.getEntity();
 
-			/*
-			if (!response.getStatusLine().toString().contains("302 Found")) {
-				Log.e("MH Login", "Login failed: Response was: " + response.getStatusLine());
-				return;
-			}
-			*/
-			/*
-			EntityUtils.consume(entity);
-
-			System.out.println("Post logon cookies:");
-			List<Cookie> cookies = httpclient.getCookieStore().getCookies();
-			if (cookies.isEmpty()) {
-				System.out.println("None");
-				Log.e("HTTP POST", e.getLocalizedMessage(), e);
-			} else {
-				for (int i = 0; i < cookies.size(); i++) {
-					System.out.println("- " + cookies.get(i).toString());
-				}
-			}
-			*/
-			/*
-			String location = response.getFirstHeader("location").getValue();
-			if ( location == null || location.contains("login.html") ) {
-				// Login was incorrect: Abort!
-				Log.e("MH Login", "Login failed: Incorrect username");
-				return;
-			}
-			*/
-
+			/* Then send the data to ingest */
 			httppost = new HttpPost("http://" + app.host + ":" + app.port + "/ingest/addMediaPackage");
 
 			MultipartEntity multipartEntity =  new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);  
 			multipartEntity.addPart("flavor",  new StringBody("presenter/source"));
-			multipartEntity.addPart("title",   new StringBody("test"));
-			multipartEntity.addPart("creator", new StringBody("Lars Kiesow"));
+			multipartEntity.addPart("title",   new StringBody(title));
+			multipartEntity.addPart("creator", new StringBody(creator));
 			multipartEntity.addPart("BODY", new FileBody(new File(app.lastRecordingPath)));
 			httppost.setEntity(multipartEntity);
 

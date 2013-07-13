@@ -7,6 +7,15 @@
 		android:layout_height="fill_parent" 
 		android:orientation="vertical">
 
+			<!-- Notice about credentials -->
+			<TextView
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="@string/settingInfo"
+				android:padding="10dp"
+				/>
+
+			<!-- The settings itself -->
 			<TextView
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
@@ -49,6 +58,15 @@
 				android:layout_height="wrap_content"
 				android:hint="@string/password" />
 
+			<!-- Notice about credentials -->
+			<TextView
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="@string/credentialInfo"
+				android:padding="10dp"
+				/>
+
+			<!-- Save button -->
 			<Button
 				android:layout_width="fill_parent"
 				android:layout_height="wrap_content"
