@@ -26,6 +26,11 @@ import android.text.TextWatcher;
 import android.text.Editable;
 import android.view.WindowManager;
 import android.widget.TextView;
+import android.app.ProgressDialog;
+import org.apache.http.protocol.HttpContext;
+import org.apache.http.protocol.BasicHttpContext;
+import android.os.AsyncTask;
+
 
 import android.content.Context;
 import android.provider.MediaStore;
@@ -73,6 +78,7 @@ import org.apache.http.util.EntityUtils;
 public class AndCA extends Activity
 {
 	private AndCAApplication app;
+	private ProgressDialog dialog;
 
 	private static final int ACTION_TAKE_VIDEO  = 3;
 	private static final int ACTION_SELECT_FILE = 2;
@@ -104,10 +110,6 @@ public class AndCA extends Activity
 		((EditText) findViewById(R.id.set_title)).addTextChangedListener(t);
 		((EditText) findViewById(R.id.set_creator)).addTextChangedListener(t);
 
-		/* Take focus from disaled input */
-		this.getWindow().setSoftInputMode(
-				WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
-
 	}
 
 
@@ -135,28 +137,39 @@ public class AndCA extends Activity
 	}
 
 	public void startRecording(View view) {
-		dispatchTakeVideoIntent();
+		if (!isIntentAvailable(this, MediaStore.ACTION_VIDEO_CAPTURE)) {
+			showDialog( R.string.error, R.string.cap_missing);
+			return;
+		}
+		Intent takeVideoIntent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
+		startActivityForResult(takeVideoIntent, ACTION_TAKE_VIDEO);
 	}
 
 	public void selectRecording(View view) {
+		if (!isIntentAvailable(this, "org.openintents.action.PICK_FILE")) {
+			showDialog( R.string.error, R.string.oif_missing);
+			return;
+		}
 		Intent intent = new Intent("org.openintents.action.PICK_FILE");
 		startActivityForResult(intent, ACTION_SELECT_FILE);
 	}
 
 	public void viewRecording(View view) {
+		if (!isIntentAvailable(this, Intent.ACTION_VIEW)) {
+			showDialog( R.string.error, R.string.play_missing);
+			return;
+		}
 		Intent intent = new Intent(Intent.ACTION_VIEW); 
 		intent.setDataAndType(app.lastRecordingUri, "video/mp4"); 
 		view.getContext().startActivity(intent); 
 	}
 
 	public void uploadRecording(View view) {
-		ingest();
+		dialog = ProgressDialog.show(this, getString(R.string.upload_rec),
+				getString(R.string.uploading), true);
+		new IngestTask().execute();
 	}
 
-	private void dispatchTakeVideoIntent() {
-		Intent takeVideoIntent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
-		startActivityForResult(takeVideoIntent, ACTION_TAKE_VIDEO);
-	}
 
 	public static boolean isIntentAvailable(Context context, String action) {
 		final PackageManager packageManager = context.getPackageManager();
@@ -199,14 +212,22 @@ public class AndCA extends Activity
 		return null;
 	}
 
-	public void showErrorDialog( int resid ) {
-		showErrorDialog( getString(resid) );
+	public void showDialog( int title, int msg ) {
+		showDialog( getString(title), getString(msg) );
 	}
 
-	public void showErrorDialog( String msg ) {
+	public void showDialog( String title, int msg ) {
+		showDialog( title, getString(msg) );
+	}
+
+	public void showDialog( int title, String msg ) {
+		showDialog( getString(title), msg );
+	}
+
+	public void showDialog( String title, String msg ) {
 	
 		AlertDialog alertDialog = new AlertDialog.Builder(this).create();
-		alertDialog.setTitle(getString(R.string.error));
+		alertDialog.setTitle(title);
 		alertDialog.setMessage(msg);
 		alertDialog.setButton(
 			DialogInterface.BUTTON_POSITIVE, 
@@ -231,11 +252,8 @@ public class AndCA extends Activity
 		// Handle item selection
 		switch (item.getItemId()) {
 			case R.id.options:
-				Log.d("LOGCAT", "##### 1 ##################################");
 				Intent intent = new Intent(this, Settings.class);
-				Log.d("LOGCAT", "##### 2 ##################################");
 				startActivity(intent);
-				Log.d("LOGCAT", "##### 3 ##################################");
 				return true;
 			default:
 				return super.onOptionsItemSelected(item);
@@ -243,58 +261,73 @@ public class AndCA extends Activity
 	}
 
 
-	public void ingest() {
+	private class IngestTask extends AsyncTask <Void, Void, String>{
+		@Override
+		protected String doInBackground(Void... unsued) {
 
-		DefaultHttpClient httpClient = new DefaultHttpClient();
+			DefaultHttpClient httpClient = new DefaultHttpClient();
 
-		String title   = ((EditText) findViewById(R.id.set_title)).getText().toString();
-		String creator = ((EditText) findViewById(R.id.set_creator)).getText().toString();
+			String title   = ((EditText) findViewById(R.id.set_title)).getText().toString();
+			String creator = ((EditText) findViewById(R.id.set_creator)).getText().toString();
 
-		try {
-			/* First login to the MH core server */
-			HttpPost httppost = new HttpPost("http://" + app.host + ":" + app.port + "/j_spring_security_check");
 
-			List <NameValuePair> nvps = new ArrayList <NameValuePair>();
-			nvps.add(new BasicNameValuePair("j_username", app.user));
-			nvps.add(new BasicNameValuePair("j_password", app.passwd));
+			try {
+				/* First login to the MH core server */
+				HttpPost httppost = new HttpPost("http://" + app.host + ":" + app.port + "/j_spring_security_check");
 
-			httppost.setEntity(new UrlEncodedFormEntity(nvps));
+				List <NameValuePair> nvps = new ArrayList <NameValuePair>();
+				nvps.add(new BasicNameValuePair("j_username", app.user));
+				nvps.add(new BasicNameValuePair("j_password", app.passwd));
 
-			HttpResponse response = httpClient.execute(httppost);
-			HttpEntity entity = response.getEntity();
+				httppost.setEntity(new UrlEncodedFormEntity(nvps));
 
-			/* Then send the data to ingest */
-			httppost = new HttpPost("http://" + app.host + ":" + app.port + "/ingest/addMediaPackage");
+				HttpResponse response = httpClient.execute(httppost);
+				HttpEntity entity = response.getEntity();
 
-			MultipartEntity multipartEntity =  new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);  
-			multipartEntity.addPart("flavor",  new StringBody("presenter/source"));
-			multipartEntity.addPart("title",   new StringBody(title));
-			multipartEntity.addPart("creator", new StringBody(creator));
-			multipartEntity.addPart("BODY", new FileBody(new File(app.lastRecordingPath)));
-			httppost.setEntity(multipartEntity);
+				/* Then send the data to ingest */
+				httppost = new HttpPost("http://" + app.host + ":" + app.port + "/ingest/addMediaPackage");
 
-			httpClient.execute(httppost, new PhotoUploadResponseHandler());
+				MultipartEntity multipartEntity =  new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);  
+				multipartEntity.addPart("flavor",  new StringBody("presenter/source"));
+				multipartEntity.addPart("title",   new StringBody(title));
+				multipartEntity.addPart("creator", new StringBody(creator));
+				multipartEntity.addPart("BODY", new FileBody(new File(app.lastRecordingPath)));
+				httppost.setEntity(multipartEntity);
 
-		} catch (Exception e) {
-			Log.e("HTTP POST", e.getLocalizedMessage(), e);
-		} finally {
-			httpClient.getConnectionManager().shutdown();
+				response = httpClient.execute(httppost);
+				BufferedReader reader = new BufferedReader( new InputStreamReader(
+							response.getEntity().getContent(), "UTF-8"));
+				 
+				String sResponse = reader.readLine();
+				return sResponse;
+
+			} catch (Exception e) {
+				if (dialog.isShowing())
+					dialog.dismiss();
+				Log.e("HTTP POST", e.getLocalizedMessage(), e);
+				showDialog(R.string.error, R.string.ingest_failed);
+				return null;
+			} finally {
+				httpClient.getConnectionManager().shutdown();
+			}
 		}
-	}
-
-	private class PhotoUploadResponseHandler implements ResponseHandler<Object> {
 
 		@Override
-		public Object handleResponse(HttpResponse response)
-			throws ClientProtocolException, IOException {
+		protected void onProgressUpdate(Void... unsued) {}
 
-			HttpEntity r_entity = response.getEntity();
-			String responseString = EntityUtils.toString(r_entity);
-			Log.d("UPLOAD", responseString);
+		@Override
+		protected void onPostExecute(String response) {
+			if (dialog.isShowing())
+				dialog.dismiss();
 
-			return null;
+			if (response != null) {
+				if (response.contains("<workflow ")) {
+					showDialog(R.string.success, R.string.ingest_success);
+				} else {
+					showDialog(R.string.error, R.string.ingest_failed);
+				}
+			}
 		}
-
 	}
 
 }

@@ -22,10 +22,18 @@ public class Settings extends Activity {
 		app = (AndCAApplication) this.getApplication();
 
 		//((EditText) findViewById(R.id.hostedit)).setEnabled(true);
-		((EditText) findViewById(R.id.hostedit)).setText( app.host );
-		((EditText) findViewById(R.id.portedit)).setText( app.port );
-		((EditText) findViewById(R.id.useredit)).setText( app.user );
-		((EditText) findViewById(R.id.passwdedit)).setText( app.passwd );
+		if (app.host != null) {
+			((EditText) findViewById(R.id.hostedit)).setText( app.host );
+		}
+		if (app.port != null) {
+			((EditText) findViewById(R.id.portedit)).setText( app.port );
+		}
+		if (app.user != null) {
+			((EditText) findViewById(R.id.useredit)).setText( app.user );
+		}
+		if (app.passwd != null) {
+			((EditText) findViewById(R.id.passwdedit)).setText( app.passwd );
+		}
 	}
 
 	public void saveSettings(View view) {

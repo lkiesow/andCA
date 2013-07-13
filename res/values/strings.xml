@@ -6,6 +6,10 @@
 	<string name="start_rec"     >Start Recording</string>
 	<string name="select_rec"    >Select Recording</string>
 	<string name="selected_file" >Selected file:</string>
+	<string name="cap_missing"   >An application for video capturing (i.e. Camera App) is necessary for this.</string>
+	<string name="oif_missing"   >The OI File Manager from OpenIntents is necessary for file selection. You can get it from the Play Store or from
+http://openintents.org.</string>
+	<string name="play_missing"  >An application for video playback is necessary for this.</string>
 
 	<string name="step_two"      >Step 2:</string>
 	<string name="view_rec"      >View Recording</string>
@@ -14,6 +18,9 @@
 
 	<string name="step_three"    >Step 3:</string>
 	<string name="upload_rec"    >Upload Recording</string>
+	<string name="uploading"     >Ingesting video to Opencast Matterhorn. Please wait…</string>
+	<string name="ingest_failed" >Failed to ingest recording.</string>
+	<string name="ingest_success">Recording successful ingested.</string>
 
 	<string name="settings"      >Settings</string>
 	<string name="settingInfo"   >The following data specify an Opencast Matterhorn server:</string>
@@ -26,4 +33,5 @@
 	<string name="ok"            >OK</string>
 	<string name="cancel"        >Cancel</string>
 	<string name="error"         >Error</string>
+	<string name="success"       >Success</string>
 </resources>
