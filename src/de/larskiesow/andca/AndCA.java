@@ -96,7 +96,7 @@ public class AndCA extends Activity
 		app = ((AndCAApplication) this.getApplication());
 		SharedPreferences settings = getSharedPreferences(app.PREFS_NAME, 0);
        
-		app.host   = settings.getString("host",     "131.173.168.36");
+		app.host   = settings.getString("host",     "repo.virtuos.uos.de");
 		app.port   = settings.getString("port",     "8080");
 		app.user   = settings.getString("user",     "admin");
 		app.passwd = settings.getString("password", "opencast");
@@ -146,12 +146,19 @@ public class AndCA extends Activity
 	}
 
 	public void selectRecording(View view) {
-		if (!isIntentAvailable(this, "org.openintents.action.PICK_FILE")) {
-			showDialog( R.string.error, R.string.oif_missing);
-			return;
+		if (isIntentAvailable(this, Intent.ACTION_GET_CONTENT)) {
+			Intent pickMedia = new Intent(Intent.ACTION_GET_CONTENT);
+			pickMedia.setType("video/*");
+			startActivityForResult(pickMedia, ACTION_SELECT_FILE);
+
+		} else {
+			if (!isIntentAvailable(this, "org.openintents.action.PICK_FILE")) {
+				showDialog( R.string.error, R.string.oif_missing);
+				return;
+			}
+			Intent intent = new Intent("org.openintents.action.PICK_FILE");
+			startActivityForResult(intent, ACTION_SELECT_FILE);
 		}
-		Intent intent = new Intent("org.openintents.action.PICK_FILE");
-		startActivityForResult(intent, ACTION_SELECT_FILE);
 	}
 
 	public void viewRecording(View view) {
