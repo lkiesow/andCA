@@ -1,8 +1,10 @@
 package de.larskiesow.andca;
 
 import android.app.Activity;
+import android.drm.DrmStore;
 import android.os.Bundle;
 import android.graphics.PorterDuff;
+import android.os.Environment;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TableRow;
@@ -36,6 +38,8 @@ import android.content.Context;
 import android.provider.MediaStore;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+
+import java.text.SimpleDateFormat;
 import java.util.List;
 import java.io.File;
 import java.util.ArrayList;
@@ -43,6 +47,7 @@ import android.net.Uri;
 import android.database.Cursor;
 import android.util.Log;
 import android.content.CursorLoader;
+import android.widget.Toast;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.util.EntityUtils;
@@ -77,13 +82,17 @@ import org.apache.http.util.EntityUtils;
 
 public class AndCA extends Activity
 {
-	private AndCAApplication app;
+    private AndCAApplication app;
 	private ProgressDialog dialog;
 
-	private static final int ACTION_TAKE_VIDEO  = 3;
+    private Uri fileUri;
+    public static final int MEDIA_TYPE_VIDEO = 2;
+	private static final int ACTION_TAKE_VIDEO  = 200;
 	private static final int ACTION_SELECT_FILE = 2;
+    static final int REQUEST_VIDEO_CAPTURE = 1;
 
-	/** Called when the activity is first created. */
+
+    /** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState)
 	{
@@ -95,7 +104,7 @@ public class AndCA extends Activity
 		/* Restore preferences */
 		app = ((AndCAApplication) this.getApplication());
 		SharedPreferences settings = getSharedPreferences(app.PREFS_NAME, 0);
-       
+
 		app.host   = settings.getString("host",     "repo.virtuos.uos.de");
 		app.port   = settings.getString("port",     "8080");
 		app.user   = settings.getString("user",     "admin");
@@ -142,7 +151,16 @@ public class AndCA extends Activity
 			return;
 		}
 		Intent takeVideoIntent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
-		startActivityForResult(takeVideoIntent, ACTION_TAKE_VIDEO);
+        // create a file to save the video
+        fileUri = getOutputMediaFileUri(MEDIA_TYPE_VIDEO);
+
+        // set the image file name
+        takeVideoIntent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri);
+
+
+        startActivityForResult(takeVideoIntent, ACTION_TAKE_VIDEO);
+
+
 	}
 
 	public void selectRecording(View view) {
@@ -166,9 +184,9 @@ public class AndCA extends Activity
 			showDialog( R.string.error, R.string.play_missing);
 			return;
 		}
-		Intent intent = new Intent(Intent.ACTION_VIEW); 
-		intent.setDataAndType(app.lastRecordingUri, "video/mp4"); 
-		view.getContext().startActivity(intent); 
+		Intent intent = new Intent(Intent.ACTION_VIEW);
+		intent.setDataAndType(app.lastRecordingUri, "video/mp4");
+		view.getContext().startActivity(intent);
 	}
 
 	public void uploadRecording(View view) {
@@ -187,7 +205,7 @@ public class AndCA extends Activity
 		return list.size() > 0;
 	}
 
-	
+
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
 
 		if (resultCode == RESULT_OK) {
@@ -203,8 +221,60 @@ public class AndCA extends Activity
 	}
 
 
+    /** Create a file Uri for saving an image or video */
+    private static Uri getOutputMediaFileUri(int type){
+        return Uri.fromFile(getOutputMediaFile(type));
+    }
+
+    /** Create a File for saving an image or video */
+    private static File getOutputMediaFile(int type){
+
+        // Check that the SDCard is mounted
+        File mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_MOVIES), "MatterhornVideos");
+
+
+        // Create the storage directory(MyCameraVideo) if it does not exist
+        if (! mediaStorageDir.exists()){
+
+            if (! mediaStorageDir.mkdirs()){
+
+                //output.setText("Failed to create directory MyCameraVideo.");
+
+                Log.d("MyCameraVideo", "Failed to create directory MyCameraVideo.");
+                return null;
+            }
+        }
+
+
+        // Create a media file name
+
+        // For unique file name appending current timeStamp with file name
+        java.util.Date date= new java.util.Date();
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss")
+                .format(date.getTime());
+
+        File mediaFile;
+
+        if(type == MEDIA_TYPE_VIDEO) {
+
+            // For unique video file name appending current timeStamp with file name
+            mediaFile = new File(mediaStorageDir.getPath() + File.separator +
+                    "VID_"+ timeStamp + ".mp4");
+            Log.d("StorageDir",mediaFile.toString());
+        } else {
+            return null;
+        }
+
+        return mediaFile;
+    }
+
+
+
+
+
 	public String getPath(Uri uri) {
-		if ( "content".equals(uri.getScheme()) ) {      
+		if ( "content".equals(uri.getScheme()) ) {
 			String[] projection = { MediaStore.Images.Media.DATA };
 			Cursor cursor = managedQuery(uri, projection, null, null, null);
 			if (cursor != null) {
@@ -232,18 +302,18 @@ public class AndCA extends Activity
 	}
 
 	public void showDialog( String title, String msg ) {
-	
+
 		AlertDialog alertDialog = new AlertDialog.Builder(this).create();
 		alertDialog.setTitle(title);
 		alertDialog.setMessage(msg);
 		alertDialog.setButton(
-			DialogInterface.BUTTON_POSITIVE, 
-			getString(R.string.ok), 
+			DialogInterface.BUTTON_POSITIVE,
+			getString(R.string.ok),
 			new DialogInterface.OnClickListener() {
 				public void onClick(DialogInterface dialog, int which) {
-				}}); 
+				}});
 		alertDialog.show();
-	
+
 	}
 
 
@@ -294,7 +364,7 @@ public class AndCA extends Activity
 				/* Then send the data to ingest */
 				httppost = new HttpPost("http://" + app.host + ":" + app.port + "/ingest/addMediaPackage");
 
-				MultipartEntity multipartEntity =  new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);  
+				MultipartEntity multipartEntity =  new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
 				multipartEntity.addPart("flavor",  new StringBody("presenter/source"));
 				multipartEntity.addPart("title",   new StringBody(title));
 				multipartEntity.addPart("creator", new StringBody(creator));
@@ -304,7 +374,7 @@ public class AndCA extends Activity
 				response = httpClient.execute(httppost);
 				BufferedReader reader = new BufferedReader( new InputStreamReader(
 							response.getEntity().getContent(), "UTF-8"));
-				 
+
 				String sResponse = reader.readLine();
 				return sResponse;
 
